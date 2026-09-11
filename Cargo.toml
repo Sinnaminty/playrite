@@ -1,0 +1,15 @@
+[package]
+name = "playrite"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+description = "A terminal writing desk with character-aware stories and standalone HTML export"
+
+[dependencies]
+crossterm = "0.28"
+ratatui = "0.29"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tempfile = "3"
+unicode-width = "0.2"
+unicode-segmentation = "1"

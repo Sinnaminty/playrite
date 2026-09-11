@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "title": "The last light",
+  "subtitle": "A small story about finding the way home",
+  "author": "Your name",
+  "characters": [
+    {
+      "id": 1,
+      "name": "Mara",
+      "description": "The lighthouse keeper. Collects things the sea returns.",
+      "color": "#9b513c"
+    },
+    {
+      "id": 2,
+      "name": "Ellis",
+      "description": "A traveler with a letter he has never opened.",
+      "color": "#386d73"
+    }
+  ],
+  "blocks": [
+    {
+      "kind": "scene",
+      "character": null,
+      "text": "I. The shore"
+    },
+    {
+      "kind": "narration",
+      "character": null,
+      "text": "By the time the stranger reached the lighthouse, the tide had erased his footprints. Above him, a single window held the last **amber light** of evening."
+    },
+    {
+      "kind": "action",
+      "character": 1,
+      "text": "Sets two cups on the windowsill, as though she had been expecting someone."
+    },
+    {
+      "kind": "dialogue",
+      "character": 1,
+      "text": "You took the long way."
+    },
+    {
+      "kind": "dialogue",
+      "character": 2,
+      "text": "I wasn't sure there was a short one."
+    },
+    {
+      "kind": "thought",
+      "character": 2,
+      "text": "Tell her about the letter. *Before you lose your nerve.*"
+    },
+    {
+      "kind": "quote",
+      "character": null,
+      "text": "Some lights are kept for ships. Others are kept for the people who never learned to leave."
+    },
+    {
+      "kind": "divider",
+      "character": null,
+      "text": ""
+    },
+    {
+      "kind": "scene",
+      "character": null,
+      "text": "II. What the sea returns"
+    },
+    {
+      "kind": "narration",
+      "character": null,
+      "text": "Mara turned the envelope over. The paper was soft at the edges, its creases worn nearly through. Outside, the lamp began its patient circle."
+    },
+    {
+      "kind": "dialogue",
+      "character": 1,
+      "text": "Well. You're here now."
+    },
+    {
+      "kind": "note",
+      "character": null,
+      "text": "What is inside the letter? Leave space for the reader. This private note will not appear in the HTML export."
+    }
+  ]
+}
