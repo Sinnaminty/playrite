@@ -1,6 +1,7 @@
 mod app;
 mod editor;
 mod export;
+mod format;
 mod story;
 mod ui;
 
@@ -25,7 +26,7 @@ fn run() -> Result<(), String> {
     let args: Vec<String> = env::args().skip(1).collect();
     if args.first().is_some_and(|s| s == "--help" || s == "-h") {
         println!(
-            "Playrite — a quiet place to write\n\nUSAGE\n  playrite [STORY.json]                  Open or start a story\n  playrite demo [STORY.json]             Create and open a sample story\n  playrite export STORY.json [-o OUT.html] [--force]\n                                        Export without opening the editor\n\nThe default story is story.playrite.json. Demo defaults to demo.playrite.json.\nExport refuses to overwrite an existing file unless --force is supplied.\nInside the editor, press ? for help. Stories are saved with Ctrl+S."
+            "Playrite — a quiet place to write\n\nUSAGE\n  playrite [STORY.playrite]                  Open or start a story\n  playrite demo [STORY.playrite]             Create and open a sample story\n  playrite export STORY.playrite [-o OUT.html] [--force]\n                                        Export without opening the editor\n\nThe default story is story.playrite. Demo defaults to demo.playrite.\nExport refuses to overwrite an existing file unless --force is supplied.\nInside the editor, press ? for help. Stories are saved with Ctrl+S."
         );
         return Ok(());
     }
@@ -37,7 +38,7 @@ fn run() -> Result<(), String> {
         let input = args
             .get(1)
             .filter(|s| !s.starts_with('-'))
-            .ok_or("Usage: playrite export STORY.json [-o OUT.html] [--force]")?;
+            .ok_or("Usage: playrite export STORY.playrite [-o OUT.html] [--force]")?;
         let mut output = PathBuf::from(input).with_extension("html");
         let mut force = false;
         let mut i = 2;
@@ -83,13 +84,9 @@ fn run() -> Result<(), String> {
         return Err("The editor needs an interactive terminal. Use `playrite export` for a non-interactive export.".into());
     }
     let path = PathBuf::from(if demo {
-        args.get(1)
-            .map(String::as_str)
-            .unwrap_or("demo.playrite.json")
+        args.get(1).map(String::as_str).unwrap_or("demo.playrite")
     } else {
-        args.first()
-            .map(String::as_str)
-            .unwrap_or("story.playrite.json")
+        args.first().map(String::as_str).unwrap_or("story.playrite")
     });
     let document = if demo {
         if path.exists() {

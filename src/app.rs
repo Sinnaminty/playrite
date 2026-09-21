@@ -374,7 +374,7 @@ impl App {
                         "Story file",
                         self.document
                             .path
-                            .with_extension("copy.json")
+                            .with_extension("copy.playrite")
                             .display()
                             .to_string(),
                     )],
@@ -728,7 +728,7 @@ pub fn run(document: Document) -> io::Result<()> {
 mod tests {
     use super::*;
     fn app() -> App {
-        App::new(Document::new("unused.json".into(), Story::demo()))
+        App::new(Document::new("unused.playrite".into(), Story::demo()))
     }
     fn key(app: &mut App, code: KeyCode) {
         app.key(code.into());

@@ -572,7 +572,7 @@ mod tests {
     fn renders_wide_narrow_and_small_terminals_with_dialogs() {
         for (w, h) in [(140, 40), (80, 24), (56, 18), (30, 8)] {
             let mut terminal = Terminal::new(TestBackend::new(w, h)).unwrap();
-            let mut app = App::new(Document::new("test.json".into(), Story::demo()));
+            let mut app = App::new(Document::new("test.playrite".into(), Story::demo()));
             terminal.draw(|f| draw(f, &mut app)).unwrap();
             app.key(crossterm::event::KeyCode::Char('c').into());
             terminal.draw(|f| draw(f, &mut app)).unwrap();

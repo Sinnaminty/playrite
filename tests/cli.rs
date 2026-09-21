@@ -14,12 +14,19 @@ const STORY: &str = r##"{
   ]
 }"##;
 
+const BINARY_STORY: &[u8] = include_bytes!("fixtures/story.playrite");
+
 #[test]
 fn cli_export_round_trip_and_overwrite_guards() {
+    check_export("story.playrite", BINARY_STORY);
+    check_export("story.json", STORY.as_bytes());
+}
+
+fn check_export(filename: &str, bytes: &[u8]) {
     let dir = tempfile::tempdir().unwrap();
-    let source = dir.path().join("story.json");
+    let source = dir.path().join(filename);
     let output = dir.path().join("story.html");
-    fs::write(&source, STORY).unwrap();
+    fs::write(&source, bytes).unwrap();
     let result = command().arg("export").arg(&source).output().unwrap();
     assert!(
         result.status.success(),
@@ -61,7 +68,7 @@ fn cli_export_round_trip_and_overwrite_guards() {
             .status
             .success()
     );
-    assert_eq!(fs::read_to_string(&source).unwrap(), STORY);
+    assert_eq!(fs::read(&source).unwrap(), bytes);
 }
 
 #[test]
@@ -70,14 +77,14 @@ fn cli_rejects_missing_invalid_and_same_source_with_html_extension() {
     assert!(
         !command()
             .arg("export")
-            .arg(dir.path().join("missing.json"))
+            .arg(dir.path().join("missing.playrite"))
             .output()
             .unwrap()
             .status
             .success()
     );
     let path = dir.path().join("manuscript.html");
-    fs::write(&path, STORY).unwrap();
+    fs::write(&path, BINARY_STORY).unwrap();
     assert!(
         !command()
             .arg("export")
@@ -88,8 +95,8 @@ fn cli_rejects_missing_invalid_and_same_source_with_html_extension() {
             .status
             .success()
     );
-    assert_eq!(fs::read_to_string(&path).unwrap(), STORY);
-    fs::write(&path, "broken json").unwrap();
+    assert_eq!(fs::read(&path).unwrap(), BINARY_STORY);
+    fs::write(&path, b"PLAYRITE\x01").unwrap();
     assert!(
         !command()
             .arg("export")
@@ -101,4 +108,5 @@ fn cli_rejects_missing_invalid_and_same_source_with_html_extension() {
             .status
             .success()
     );
+    assert!(!dir.path().join("out.html").exists());
 }

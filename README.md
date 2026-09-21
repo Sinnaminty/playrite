@@ -9,24 +9,24 @@ Write in small, movable blocks. Give dialogue a speaker, distinguish actions fro
 Requires Rust 1.88 or newer and an interactive terminal.
 
 ```sh
-cargo run --release -- my-story.playrite.json
+cargo run --release -- my-story.playrite
 ```
 
-An existing file opens for editing; a missing file starts a blank story. With no filename, Playrite uses `story.playrite.json`. Save with **Ctrl+S**. Playrite does not autosave; quitting with unsaved changes offers save, discard, or cancel.
+An existing file opens for editing; a missing file starts a blank story. With no filename, Playrite uses `story.playrite`. Save with **Ctrl+S**. Playrite does not autosave; quitting with unsaved changes offers save, discard, or cancel.
 
-Try the included sample:
+Try the included sample, *The last light*:
 
 ```sh
-cargo run --release -- demo
+cargo run --release -- demo.playrite
 ```
 
-This starts a sample called *The last light*, saved to `demo.playrite.json` when you press Ctrl+S. To reopen it, run `cargo run --release -- demo.playrite.json`. The `demo` command refuses to replace an existing file.
+To create a fresh sample at another path, run `cargo run --release -- demo my-demo.playrite` and press Ctrl+S to save. The `demo` command defaults to `demo.playrite` and refuses to replace an existing file.
 
 To install the executable:
 
 ```sh
 cargo install --path .
-playrite my-story.playrite.json
+playrite my-story.playrite
 ```
 
 ## A first writing session
@@ -97,7 +97,7 @@ Character management also supports **e** to edit, **d** to remove, **Enter** to 
 ## Export without the editor
 
 ```sh
-playrite export my-story.playrite.json -o my-story.html
+playrite export my-story.playrite -o my-story.html
 ```
 
 The default output replaces the source extension with `.html`. Existing exports require `--force` on the command line, or confirmation in the editor. The source story cannot be used as the export destination.
@@ -106,7 +106,9 @@ The editor exports the current manuscript, including unsaved changes. Command-li
 
 ## Files and development
 
-Stories are human-readable, versioned JSON with metadata, characters, and an ordered list of blocks. Keep the JSON to continue editing; HTML is the published reading copy and cannot be imported as a manuscript.
+Stories use a compact, versioned binary `.playrite` format with metadata, characters, and an ordered list of blocks. Text is stored as UTF-8, with no JSON keys or escaping. The [format specification](FORMAT.md) documents the byte layout. Keep the `.playrite` manuscript to continue editing; HTML is the published reading copy and cannot be imported as a manuscript.
+
+Existing JSON stories still open and export. All saves use binary: **Ctrl+S** replaces the contents at the current path, even if it ends in `.json`. To preserve a JSON original, open it and use **F4** to save a new `.playrite` copy.
 
 Saves use a temporary file in the destination directory followed by an atomic replacement. If a story changes on disk after being opened, Playrite refuses to overwrite it; **F4** saves your edits to a separate file. Parent directories must already exist.
 

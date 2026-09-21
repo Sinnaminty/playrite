@@ -1,4 +1,5 @@
-use serde::{Deserialize, Serialize};
+use crate::format;
+use serde::Deserialize;
 use std::{
     collections::HashSet,
     fs,
@@ -10,7 +11,7 @@ pub const PALETTE: [&str; 8] = [
     "#9b513c", "#386d73", "#705589", "#627440", "#996622", "#a34f70", "#456da1", "#716355",
 ];
 
-#[derive(Clone, Copy, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum Kind {
     #[default]
@@ -63,7 +64,7 @@ impl Kind {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 pub struct Character {
     pub id: u64,
     pub name: String,
@@ -71,14 +72,14 @@ pub struct Character {
     pub color: String,
 }
 
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, Deserialize, PartialEq, Eq)]
 pub struct StoryBlock {
     pub kind: Kind,
     pub character: Option<u64>,
     pub text: String,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 pub struct Story {
     pub version: u32,
     pub title: String,
@@ -191,6 +192,7 @@ pub struct Document {
     pub story: Story,
     pub path: PathBuf,
     saved: Option<Vec<u8>>,
+    saved_story: Option<Story>,
 }
 
 impl Document {
@@ -199,16 +201,17 @@ impl Document {
             story,
             path,
             saved: None,
+            saved_story: None,
         }
     }
 
     pub fn open(path: PathBuf) -> Result<Self, String> {
         match fs::read(&path) {
             Ok(bytes) => {
-                let story: Story = serde_json::from_slice(&bytes)
+                let story = format::decode(&bytes)
                     .map_err(|e| format!("Cannot read {}: {e}", path.display()))?;
-                story.validate()?;
                 Ok(Self {
+                    saved_story: Some(story.clone()),
                     story,
                     path,
                     saved: Some(bytes),
@@ -222,9 +225,7 @@ impl Document {
     }
 
     pub fn dirty(&self) -> bool {
-        self.saved.as_ref().is_none_or(|bytes| {
-            serde_json::from_slice::<Story>(bytes).ok().as_ref() != Some(&self.story)
-        })
+        self.saved_story.as_ref() != Some(&self.story)
     }
 
     pub fn save(&mut self) -> Result<(), String> {
@@ -235,18 +236,20 @@ impl Document {
             (Err(e), _) if e.kind() != std::io::ErrorKind::NotFound => return Err(e.to_string()),
             _ => return Err("Story changed on disk; save refused to protect those changes. Your edits remain in the editor. Use F4 to save a copy.".into()),
         }
-        let bytes = serde_json::to_vec_pretty(&self.story).map_err(|e| e.to_string())?;
+        let bytes = format::encode(&self.story)?;
         atomic_write(&self.path, &bytes, self.saved.is_some())?;
         self.saved = Some(bytes);
+        self.saved_story = Some(self.story.clone());
         Ok(())
     }
 
     pub fn save_copy(&mut self, path: PathBuf) -> Result<(), String> {
         self.story.validate()?;
-        let bytes = serde_json::to_vec_pretty(&self.story).map_err(|e| e.to_string())?;
+        let bytes = format::encode(&self.story)?;
         atomic_write(&path, &bytes, false)?;
         self.path = path;
         self.saved = Some(bytes);
+        self.saved_story = Some(self.story.clone());
         Ok(())
     }
 }
@@ -277,18 +280,45 @@ mod tests {
     #[test]
     fn round_trip_and_external_edit_protection() {
         let dir = tempfile::tempdir().unwrap();
-        let path = dir.path().join("story.json");
+        let path = dir.path().join("story.playrite");
         let mut doc = Document::new(path.clone(), Story::demo());
         assert!(doc.dirty());
         doc.save().unwrap();
+        assert!(!doc.dirty());
+        assert!(fs::read(&path).unwrap().starts_with(b"PLAYRITE"));
+        let title = doc.story.title.clone();
+        doc.story.title.push('!');
+        assert!(doc.dirty());
+        doc.story.title = title;
         assert!(!doc.dirty());
         assert_eq!(Document::open(path.clone()).unwrap().story, doc.story);
         fs::write(&path, b"external edit").unwrap();
         doc.story.title = "Changed".into();
         assert!(doc.save().is_err());
         assert_eq!(fs::read_to_string(&path).unwrap(), "external edit");
-        doc.save_copy(dir.path().join("copy.json")).unwrap();
+        doc.save_copy(dir.path().join("copy.playrite")).unwrap();
         assert!(!doc.dirty());
+    }
+
+    #[test]
+    fn imports_json_and_saves_binary_copies_without_overwriting_files() {
+        let dir = tempfile::tempdir().unwrap();
+        let source = dir.path().join("legacy.json");
+        let legacy = include_bytes!("../tests/fixtures/legacy.playrite.json");
+        fs::write(&source, legacy).unwrap();
+        let mut doc = Document::open(source.clone()).unwrap();
+        assert!(!doc.dirty());
+        assert!(doc.save_copy(source.clone()).is_err());
+        let destination = dir.path().join("story.playrite");
+        doc.save_copy(destination.clone()).unwrap();
+        assert_eq!(fs::read(&source).unwrap(), legacy);
+        assert_eq!(doc.path, destination);
+        assert_eq!(Document::open(destination).unwrap().story, Story::demo());
+        assert!(!doc.dirty());
+        let mut original = Document::open(source.clone()).unwrap();
+        original.save().unwrap();
+        assert!(fs::read(&source).unwrap().starts_with(b"PLAYRITE"));
+        assert_eq!(Document::open(source).unwrap().story, Story::demo());
     }
 
     #[test]
